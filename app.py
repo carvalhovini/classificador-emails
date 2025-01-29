@@ -1,10 +1,17 @@
 import os
-import openai
 import pdfplumber
+from openai import OpenAI
 from flask import Flask, request, render_template, jsonify
 
 app = Flask(__name__)
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+
+# Obtendo a chave da OpenAI da variável de ambiente
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
+if not openai_api_key:
+    raise ValueError("Erro: OPENAI_API_KEY não foi encontrada. Configure no Render.")
+
+client = OpenAI(api_key=openai_api_key)
 
 def process_email_with_gpt(email_text):
     prompt = f"""
@@ -36,13 +43,14 @@ def process_email_with_gpt(email_text):
     2. Subcategoria: [Especifique a subcategoria].
     3. Resposta sugerida: [Forneça uma resposta ou diga "Sem resposta necessária" se for improdutivo].
     """
+
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Ou gpt-4
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[{"role": "system", "content": prompt}],
             temperature=0.5
         )
-        return response['choices'][0]['message']['content']
+        return response.choices[0].message.content
     except Exception as e:
         return f"Erro ao processar o email: {str(e)}"
 
@@ -52,9 +60,12 @@ def extract_text_from_file(file):
         return file.read().decode('utf-8')
     elif file.filename.endswith('.pdf'):
         with pdfplumber.open(file) as pdf:
-            return ''.join([page.extract_text() for page in pdf.pages])
-    else:
-        return None
+            text = ''
+            for page in pdf.pages:
+                if page.extract_text():
+                    text += page.extract_text() + '\n'
+            return text.strip() if text else None
+    return None
 
 @app.route('/')
 def index():
@@ -75,11 +86,13 @@ def process_email():
         return jsonify({'error': 'Por favor, insira o texto do email ou envie um arquivo válido.'}), 400
 
     gpt_result = process_email_with_gpt(email_text)
-    
+
     if "Erro ao processar" in gpt_result:
         return jsonify({'error': gpt_result}), 500
 
     return jsonify({'response': gpt_result})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Tornando o servidor compatível com plataformas de hospedagem
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
