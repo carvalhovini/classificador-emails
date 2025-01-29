@@ -1,1 +1,7 @@
+# Evita arquivos sensíveis
 .env
+*.json
+venv/
+__pycache__/
+*.log
+
