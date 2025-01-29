@@ -4,7 +4,7 @@ import pdfplumber
 from flask import Flask, request, render_template, jsonify
 
 app = Flask(__name__)
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 def process_email_with_gpt(email_text):
     prompt = f"""
