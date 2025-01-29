@@ -11,6 +11,7 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
     raise ValueError("Erro: OPENAI_API_KEY não foi encontrada. Configure no Render.")
 
+# Criando um cliente OpenAI corretamente
 client = OpenAI(api_key=openai_api_key)
 
 def process_email_with_gpt(email_text):
@@ -46,11 +47,11 @@ def process_email_with_gpt(email_text):
 
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": prompt}],
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
             temperature=0.5
         )
-        return response.choices[0].message.content
+        return response.choices[0].message.content.strip()
     except Exception as e:
         return f"Erro ao processar o email: {str(e)}"
 
@@ -60,10 +61,7 @@ def extract_text_from_file(file):
         return file.read().decode('utf-8')
     elif file.filename.endswith('.pdf'):
         with pdfplumber.open(file) as pdf:
-            text = ''
-            for page in pdf.pages:
-                if page.extract_text():
-                    text += page.extract_text() + '\n'
+            text = '\n'.join([page.extract_text() for page in pdf.pages if page.extract_text()])
             return text.strip() if text else None
     return None
 
