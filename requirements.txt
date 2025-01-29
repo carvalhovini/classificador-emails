@@ -1,5 +1,4 @@
 flask
-transformers
-torch
-nltk
+openai
 pdfplumber
+gunicorn
