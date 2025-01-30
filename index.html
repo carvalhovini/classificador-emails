@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classificação de Emails</title>
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body>
+    <header>
+        <div class="logo">AutoU</div>
+        <div class="social-buttons">
+            <a href="https://github.com/carvalhovini" target="_blank">GitHub</a>
+            <a href="https://www.linkedin.com/in/carvalho-vini/" target="_blank">LinkedIn</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Classificação de Emails</h1>
+
+        <form action="/process" method="post" id="emailForm" enctype="multipart/form-data">
+            <label for="email_text">Insira o texto do email:</label>
+            <textarea id="email_text" name="email_text" placeholder="Digite ou cole o texto do email aqui..." rows="5"></textarea>
+
+            <label for="file">Ou envie um arquivo (.txt ou .pdf):</label>
+            <div class="file-container">
+                <input type="file" id="file" name="file" accept=".txt, .pdf">
+                <button type="button" class="remove-file" onclick="removeFile()">✖</button>
+            </div>
+
+            <button type="submit">Classificar Email</button>
+        </form>
+
+        <div id="results"></div>
+    </div>
+
+    <footer>
+        Desenvolvido por <a href="#">Vinicius Carvalho</a>
+    </footer>
+
+    <script>
+        document.getElementById('emailForm').onsubmit = async function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const response = await fetch('/process', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            const resultsDiv = document.getElementById('results');
+
+            if (data.error) {
+                resultsDiv.innerHTML = `<div class="error">Erro: ${data.error}</div>`;
+            } else {
+                resultsDiv.innerHTML = `
+                    <div class="results">
+                        <h3>Resultado da Classificação</h3>
+                        <p>${data.response.replace(/\n/g, '<br>')}</p>
+                    </div>
+                `;
+            }
+        };
+
+        function removeFile() {
+            document.getElementById('file').value = '';
+        }
+    </script>
+</body>
+</html>
